@@ -1,0 +1,70 @@
+%%cu
+#include<stdio.h>
+#include<cuda.h>
+#define row1 3 
+#define col1 2 
+#define row2 2 
+#define col2 1 
+
+__global__ void matvect(int *l,int *m, int *n)
+{
+    int x=blockIdx.x;
+    int y=blockIdx.y;
+    int k;
+  
+n[col2*y+x]=0;
+for(k=0;k<col1;k++)
+   {
+    n[col2*y+x]=n[col2*y+x]+l[col1*y+k]*m[col2*k+x];
+   }
+}
+
+int main()
+{
+    int a[row1][col1];
+    int b[row2][col2];
+    int c[row1][col2];
+    int *d,*e,*f;
+    int i,j;
+
+    for(i=0;i<row1;i++)
+    {
+        for(j=0;j<col1;j++)
+            {
+                a[i][j]=i*col1+j;
+            }
+    }
+       for(i=0;i<row2;i++)
+        {
+                b[i][0]=i+1;
+                
+        }
+
+    cudaMalloc((void **)&d,row1*col1*sizeof(int));
+    cudaMalloc((void **)&e,row2*col2*sizeof(int));
+    cudaMalloc((void **)&f,row1*col2*sizeof(int));
+
+ cudaMemcpy(d,a,row1*col1*sizeof(int),cudaMemcpyHostToDevice);
+ cudaMemcpy(e,b,row2*col2*sizeof(int),cudaMemcpyHostToDevice);
+
+dim3 grid(col2,row1);
+
+    matvect<<<grid,1>>>(d,e,f);
+
+ cudaMemcpy(c,f,row1*col2*sizeof(int),cudaMemcpyDeviceToHost);
+    printf("\nProduct of  Matrix-Vector multiplication:\n ");
+    for(i=0;i<row1;i++)
+    {
+        for(j=0;j<col2;j++)
+        {
+              printf("%d\t",c[i][j]);
+        }
+        printf("\n");
+    }
+
+    cudaFree(d);
+    cudaFree(e);
+    cudaFree(f);
+
+    return 0;
+}
